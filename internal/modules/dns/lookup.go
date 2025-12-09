@@ -2,30 +2,24 @@ package dns
 
 import (
 	"net"
-	"time"
 )
 
 // Analyze faz o lookup de IP e MX records
 func Analyze(hostname string) map[string]interface{} {
 	result := make(map[string]interface{})
-	
-	// Define um timeout para não travar
-	r := &net.Resolver{
-		PreferGo: true,
-		Dial: func(ctx context.Context, network, address string) (net.Conn, error) {
-			d := net.Dialer{
-				Timeout: 2 * time.Second,
-			}
-			return d.DialContext(ctx, network, address)
-		},
-	}
-    // (Nota: Para simplificar, vamos usar o default resolver do sistema no container)
-    
+
 	// 1. Busca IPs (A Records)
+	// Usamos o resolvedor padrão do sistema, que é mais simples e não precisa da var 'r'
 	ips, err := net.LookupIP(hostname)
 	if err == nil && len(ips) > 0 {
-		result["ip"] = ips[0].String()
-		result["all_ips"] = ips
+		// Converte IPs para string
+		var ipStrings []string
+		for _, ip := range ips {
+			ipStrings = append(ipStrings, ip.String())
+		}
+		
+		result["ip"] = ipStrings[0]
+		result["all_ips"] = ipStrings
 	} else {
 		result["error"] = "Não foi possível resolver o DNS"
 	}
