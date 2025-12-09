@@ -1,6 +1,6 @@
 module github.com/tls-security/talos-scanner
 
-go 1.23
+go 1.25
 
 require (
 	github.com/bytedance/gopkg v0.1.3 // indirect

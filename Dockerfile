@@ -1,5 +1,5 @@
 # --- Estágio 1: Builder (Compila o Go) ---
-FROM --platform=linux/amd64 golang:1.23-alpine AS builder
+FROM --platform=linux/amd64 golang:1.25-alpine AS builder
 
 WORKDIR /app
 
