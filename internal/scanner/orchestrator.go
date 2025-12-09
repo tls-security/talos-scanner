@@ -3,8 +3,8 @@ package scanner
 import (
     "sync"
     "time"
-    "github.com/TUA_EMPRESA/talos-scanner/internal/models"
-    "github.com/TUA_EMPRESA/talos-scanner/internal/modules/sandbox"
+    "github.com/tls-security/talos-scanner/internal/models"
+    "github.com/tls-security/talos-scanner/internal/modules/sandbox"
     // Importar outros módulos aqui...
 )
 

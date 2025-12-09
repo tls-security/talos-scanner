@@ -3,8 +3,8 @@ package main
 import (
     "github.com/gin-gonic/gin"
     "github.com/gin-contrib/cors"
-    "github.com/TUA_EMPRESA/talos-scanner/internal/scanner"
-    "github.com/TUA_EMPRESA/talos-scanner/internal/models"
+    "github.com/tls-security/talos-scanner/internal/scanner"
+    "github.com/tls-security/talos-scanner/internal/models"
     "net/http"
 )
 
