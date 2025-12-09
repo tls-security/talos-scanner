@@ -1,50 +1,73 @@
 package scanner
 
 import (
-    "sync"
-    "time"
-    "github.com/tls-security/talos-scanner/internal/models"
-    "github.com/tls-security/talos-scanner/internal/modules/sandbox"
-    // Importar outros módulos aqui...
+	"net/url"
+	"sync"
+	"time"
+    "strings"
+
+	"github.com/tls-security/talos-scanner/internal/models"
+	"github.com/tls-security/talos-scanner/internal/modules/sandbox"
+	"github.com/tls-security/talos-scanner/internal/modules/dns"
+	"github.com/tls-security/talos-scanner/internal/modules/ssl"
 )
 
 func ScanURL(targetURL string) models.FullReport {
-    start := time.Now()
-    var wg sync.WaitGroup
-    
-    // Objeto final (Thread-safe se cada módulo escrever no seu campo)
-    report := models.FullReport{URL: targetURL}
+	start := time.Now()
+	var wg sync.WaitGroup
 
-    // --- Tarefa 1: Sandbox (Browser) ---
-    wg.Add(1)
-    go func() {
-        defer wg.Done()
-        // Chama o módulo sandbox (criaremos abaixo)
-        screenshot, err := sandbox.TakeScreenshot(targetURL)
-        if err == nil {
-            report.Screenshot = screenshot
+	// Normaliza URL para extrair hostname
+	parsed, _ := url.Parse(targetURL)
+	hostname := parsed.Hostname()
+    if hostname == "" {
+        // Fallback se o user não digitou http://
+        if !strings.HasPrefix(targetURL, "http") {
+             targetURL = "http://" + targetURL
+             parsed, _ = url.Parse(targetURL)
+             hostname = parsed.Hostname()
         }
-    }()
+    }
 
-    // --- Tarefa 2: DNS & Infra (Exemplo) ---
-    wg.Add(1)
-    go func() {
-        defer wg.Done()
-        // report.DNS = dns.Analyze(targetURL) // Simulando chamada
-        report.DNS = map[string]interface{}{"ip": "127.0.0.1"} // Mock
-    }()
+	report := models.FullReport{URL: targetURL}
 
-    // --- Tarefa 3: Reputação ---
-    wg.Add(1)
-    go func() {
-        defer wg.Done()
-        // report.Reputation = reputation.CheckVT(targetURL)
-    }()
+	// --- Tarefa 1: Sandbox (Browser) ---
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		screenshot, err := sandbox.TakeScreenshot(targetURL)
+		if err == nil {
+			report.Screenshot = screenshot
+		} else {
+            // AGORA VAMOS VER O ERRO NO JSON
+			report.Screenshot = "ERRO: " + err.Error() 
+		}
+	}()
 
-    // O Go espera TODAS terminarem aqui. 
-    // Se a mais lenta demorar 3s, o total é 3s (não a soma).
-    wg.Wait() 
+	// --- Tarefa 2: DNS ---
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		report.DNS = dns.Analyze(hostname)
+	}()
 
-    report.ProcessingTime = time.Since(start).String()
-    return report
+    // --- Tarefa 3: SSL ---
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		report.SSL = ssl.Check(hostname)
+	}()
+
+	wg.Wait()
+
+	report.ProcessingTime = time.Since(start).String()
+    
+    // Simples lógica de veredito baseada no que achamos
+    report.RiskScore = 0
+    report.Verdict = "SEGURO"
+    
+    if report.Screenshot != "" && strings.HasPrefix(report.Screenshot, "ERRO") {
+         report.Verdict = "ERRO NA ANÁLISE"
+    }
+
+	return report
 }
