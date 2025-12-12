@@ -1,58 +1,20 @@
-<!DOCTYPE html>
-<html lang="pt">
-<head>
-    <meta charset="UTF-8">
-    <title>Talos Scanner (Go Version)</title>
-    <style>
-        body { font-family: sans-serif; background: #111; color: #fff; padding: 50px; text-align: center; }
-        input { padding: 10px; width: 300px; border-radius: 5px; border: none; }
-        button { padding: 10px 20px; background: #00f2ff; border: none; cursor: pointer; font-weight: bold; }
-        #result { margin-top: 20px; white-space: pre-wrap; text-align: left; background: #222; padding: 20px; display:none;}
-        img { max-width: 100%; border: 1px solid #555; margin-top: 10px; }
-    </style>
-</head>
-<body>
-    <h1>Talos Scanner (Go Backend)</h1>
-    <input type="text" id="url" placeholder="https://exemplo.com">
-    <button onclick="scan()">Escanear</button>
-
-    <div id="result">
-        <h3 id="time"></h3>
-        <img id="print" src="">
-        <pre id="json"></pre>
+<div class="scan-overlay" id="scanOverlay">
+    
+    <div id="loadingState">
+        <div class="loader"></div>
+        <p style="margin-top: 20px; color: var(--text-muted); letter-spacing: 2px;">PROCESSANDO INTELLIGENCE...</p>
     </div>
 
-    <script>
-        async function scan() {
-            const url = document.getElementById('url').value;
-            const btn = document.querySelector('button');
-            btn.innerText = "Analisando...";
-            btn.disabled = true;
-
-            try {
-                // Chama a API no mesmo domínio
-                const res = await fetch('/analyze', {
-                    method: 'POST',
-                    body: JSON.stringify({url: url})
-                });
-                const data = await res.json();
-
-                document.getElementById('result').style.display = 'block';
-                document.getElementById('time').innerText = "Tempo de Processamento: " + data.processing_time;
-                
-                if(data.screenshot_base64) {
-                    document.getElementById('print').src = data.screenshot_base64;
-                }
-                
-                document.getElementById('json').innerText = JSON.stringify(data, null, 2);
-
-            } catch(e) {
-                alert("Erro: " + e);
-            } finally {
-                btn.innerText = "Escanear";
-                btn.disabled = false;
-            }
-        }
-    </script>
-</body>
-</html>
+    <div id="resultModal" class="quick-result-modal" style="display: none;">
+        <h3 style="margin-bottom: 1rem; color: #fff;">Análise Concluída</h3>
+        
+        <div id="modalScoreCircle" class="score-circle">--</div>
+        
+        <h2 id="modalVerdict" style="font-size: 1.5rem; margin-bottom: 0.5rem;">---</h2>
+        <p style="color: var(--text-muted); font-size: 0.9rem;">Verificamos DNS, SSL, Reputação e Sandbox.</p>
+        
+        <button class="btn-details-outline" onclick="closeModalAndShowDetails()">
+            VER RELATÓRIO COMPLETO
+        </button>
+    </div>
+</div>
